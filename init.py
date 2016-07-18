@@ -54,10 +54,29 @@ def home():
 def get_ppl_details():
 	from_ip = request.args.get('from_ip')
 	date = request.args.get('date')
-	print from_ip, date
-	resp = connection.FetchPPL(from_ip, date)
-	return json.dumps(resp)
-	return render_template('host_info.html', title="Home")
+	end_date = request.args.get('end_date')
+	print from_ip, date, end_date
+	if end_date == None:
+		date = utils.ConvertStringToISODate(date)
+		resp = connection.FetchPPL(from_ip, date)
+		iso_time = resp['actual_data']['time_of_ppl_generation']
+		utc_time = iso_time.isoformat()
+		resp['actual_data']['time_of_ppl_generation'] = utc_time
+		return json.dumps(resp)
+		return render_template('host_info.html', title="Home")
+	else:
+		date = utils.ConvertStringToISODate(date)
+		end_date = utils.ConvertStringToISODate(end_date)
+		cursor = connection.FetchPPLsRange(from_ip, date, end_date)
+		response = []
+		for i in range(cursor.count()):
+			current = cursor[i]
+			iso_time = current['actual_data']['time_of_ppl_generation']
+			utc_time = iso_time.isoformat()
+			current['actual_data']['time_of_ppl_generation'] = utc_time
+			response.append(current)
+		return json.dumps(response)
+		return render_template('host_info.html', title="Home")
 
 def main():
 	print "Thread started"
@@ -111,7 +130,11 @@ def channel_hosts_list(c_req):
 	cursor = connection.FetchAllPPl()
 	response = []
 	for i in range(cursor.count()):
-		response.append(cursor[i])
+		current = cursor[i]
+		iso_time = current['actual_data']['time_of_ppl_generation']
+		utc_time = iso_time.isoformat()
+		current['actual_data']['time_of_ppl_generation'] = utc_time
+		response.append(current)
 	#print "Response : ", response
 	print "Size of json_data : ", len(response)
 	js = json.dumps(response)

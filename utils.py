@@ -201,7 +201,7 @@ def GeneratePPL():
 		accumulator = accumulators_cursor[i]
 		accumulator = ast.literal_eval(dumps(accumulator))
 		print(1, accumulator)
-		time_of_ppl_generation = datetime.datetime.now().isoformat()
+		time_of_ppl_generation = datetime.datetime.utcnow()
 		accumulator['time_of_ppl_generation'] = time_of_ppl_generation
 		accumulator.pop('_id', None)
 		data = accumulator
@@ -240,6 +240,9 @@ def get_rsa_key(agency_name):
 			rsa_key = generate_RSA_keys()
 			save_key(rsa_key, "CloudServiceProvider")
 			return rsa_key
+
+def ConvertStringToISODate(date_str):
+	return datetime.datetime.strptime( date_str, "%Y-%m-%dT%H:%M:%S.%f" )
 
 # Just a helper function to test the current module
 def bloomNDatabaseConnection():

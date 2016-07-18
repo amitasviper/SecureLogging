@@ -119,6 +119,15 @@ class MConnection():
 
 		return cursor
 
+	def FetchPPLsRange(self, ip, start_date, end_date):
+		local_collection =self.collection_PPL
+
+		data_to_search = {'actual_data.ip' : ip, 'actual_data.time_of_ppl_generation': {"$gte" : start_date, "$lte" : end_date} }
+
+		cursor = local_collection.find(data_to_search, {'_id':0, 'time':0})
+
+		return cursor
+
 	def FetchPPL(self, ip, time):
 		local_collection = self.collection_PPL
 
