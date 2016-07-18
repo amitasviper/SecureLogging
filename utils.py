@@ -201,7 +201,7 @@ def GeneratePPL():
 		accumulator = accumulators_cursor[i]
 		accumulator = ast.literal_eval(dumps(accumulator))
 		print(1, accumulator)
-		time_of_ppl_generation = datetime.datetime.utcnow()
+		time_of_ppl_generation = datetime.datetime.now()
 		accumulator['time_of_ppl_generation'] = time_of_ppl_generation
 		accumulator.pop('_id', None)
 		data = accumulator

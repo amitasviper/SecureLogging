@@ -17,5 +17,5 @@ def GetDummydata():
 	data['from_ip'] = getIpAddress()
 	data['to_ip'] = getIpAddress()
 	data['port'] = randrange(1, 65535)
-	data['time'] = datetime.utcnow()
+	data['time'] = datetime.now()
 	return data
