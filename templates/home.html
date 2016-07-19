@@ -12,6 +12,45 @@
 {% endblock %}
 
 {% block content %}
+
+    <form class="form-inline">
+        <input type="text" id="ip" class="form-control" placeholder="Valid IP Address">
+        <input type="text" id="timestamp1" class="form-control" placeholder="Start Timestamp">
+        <input type="text" id="timestamp2" class="form-control" placeholder="End Timestamp">
+        <table class="table table-striped table-bordered">
+            <tr>
+                <td><input type="text" id="start_day" class="form-control" placeholder="From Day (XX)"></td>
+                <td><input type="text" id="end_day" class="form-control" placeholder="To Day (XX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_month" class="form-control" placeholder="From Month (XX)"></td>
+                <td><input type="text" id="end_month" class="form-control" placeholder="To Month (XX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_year" class="form-control" placeholder="From Year (XXXX)"></td>
+                <td><input type="text" id="end_year" class="form-control" placeholder="To Year (XXXX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_hour" class="form-control" placeholder="From Hour (XX)"></td>
+                <td><input type="text" id="end_hour" class="form-control" placeholder="To Hour (XX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_minute" class="form-control" placeholder="From Minute (XX)"></td>
+                <td><input type="text" id="end_minute" class="form-control" placeholder="To Minute (XX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_second" class="form-control" placeholder="From Second (XX)"></td>
+                <td><input type="text" id="end_second" class="form-control" placeholder="To Second (XX)"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="start_msecond" class="form-control" placeholder="From NSecond (XXXXXX)"></td>
+                <td><input type="text" id="end_msecond" class="form-control" placeholder="To NSecond (XXXXXX)"></td>
+            </tr>
+        </table>
+    </form>
+
+    <center><button type="reset" class="btn btn-primary" onclick="prepareGetRequest()">Fetch PPLs</button></center><br>
+
     <table class="table table-striped table-bordered" id="table_logs">
         <tr>
             <th>Log Id</th>
@@ -20,4 +59,45 @@
             <th>Signature</th>
         </tr>
     </table>
+
+    <script>
+        function prepareGetRequest()
+        {
+            var ip = document.getElementById('ip').value;
+
+            var start_day = document.getElementById('start_day').value;
+            var start_month = document.getElementById('start_month').value;
+            var start_year = document.getElementById('start_year').value;
+            var start_hour = document.getElementById('start_hour').value;
+            var start_minute = document.getElementById('start_minute').value;
+            var start_second = document.getElementById('start_second').value;
+            var start_msecond = document.getElementById('start_msecond').value;
+
+            var end_day = document.getElementById('end_day').value;
+            var end_month = document.getElementById('end_month').value;
+            var end_year = document.getElementById('end_year').value;
+            var end_hour = document.getElementById('end_hour').value;
+            var end_minute = document.getElementById('end_minute').value;
+            var end_second = document.getElementById('end_second').value;
+            var end_msecond = document.getElementById('end_msecond').value;
+
+            var timestamp1 = document.getElementById('timestamp1').value;
+            var timestamp2 = document.getElementById('timestamp2').value;
+
+            if (timestamp1 && timestamp2)
+            {
+                var url = '/getppldetails?from_ip=' + ip + "&start_date=" + timestamp1 + "&end_date=" + timestamp2;
+                window.location.href = url;
+            }
+
+            else
+            {
+                var url = '/getppldetails?from_ip=' + ip + "&start_date=" + start_year + "-" + start_month + "-" + start_day + "T" + start_hour + ":" + start_minute + ":" + start_second + "." + start_msecond + "&end_date=" + end_year + "-" + end_month + "-" + end_day + "T" + end_hour + ":" + end_minute + ":" + end_second + "." + end_msecond;
+                window.location.href = url;
+
+            };
+
+
+        }
+    </script>
 {% endblock %}

@@ -20,7 +20,7 @@ function get_data(){
           console.log(actual_data + " *** " + typeof(actual_data));
           var signature = value.signature;
           if(signature.length > 10) signature = signature.substring(0,10)+"...";
-          $('#table_logs').append('<tr><td>' + index + '</td><td>' + actual_data.ip +'</td><td>' + actual_data.time_of_ppl_generation + '</td><td id = "id" onclick="get_ppl_details(\'from_ip=' + actual_data.ip +'&date=' +actual_data.time_of_ppl_generation +'\')"><a>' + signature + '</a></td></tr>');
+          $('#table_logs').append('<tr><td>' + index + '</td><td>' + actual_data.ip +'</td><td>' + actual_data.time_of_ppl_generation + '</td><td id = "id" onclick="get_ppl_details(\'from_ip=' + actual_data.ip +'&start_date=' +actual_data.time_of_ppl_generation +'\')"><a>' + signature + '</a></td></tr>');
         });
     });
 }

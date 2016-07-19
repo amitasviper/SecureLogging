@@ -52,31 +52,37 @@ def home():
 
 @app.route('/getppldetails', methods=['GET', 'POST'])
 def get_ppl_details():
-	from_ip = request.args.get('from_ip')
-	date = request.args.get('date')
-	end_date = request.args.get('end_date')
-	print from_ip, date, end_date
-	if end_date == None:
-		date = utils.ConvertStringToISODate(date)
-		resp = connection.FetchPPL(from_ip, date)
-		iso_time = resp['actual_data']['time_of_ppl_generation']
-		utc_time = iso_time.isoformat()
-		resp['actual_data']['time_of_ppl_generation'] = utc_time
-		return json.dumps(resp)
-		return render_template('host_info.html', title="Home")
-	else:
-		date = utils.ConvertStringToISODate(date)
-		end_date = utils.ConvertStringToISODate(end_date)
-		cursor = connection.FetchPPLsRange(from_ip, date, end_date)
-		response = []
-		for i in range(cursor.count()):
-			current = cursor[i]
-			iso_time = current['actual_data']['time_of_ppl_generation']
+	try:
+		from_ip = request.args.get('from_ip')
+		start_date = request.args.get('start_date')
+		end_date = request.args.get('end_date')
+		print from_ip, start_date, end_date
+		if end_date == None:
+			start_date = utils.ConvertStringToISODate(start_date)
+			resp = connection.FetchPPL(from_ip, start_date)
+			iso_time = resp['actual_data']['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
-			current['actual_data']['time_of_ppl_generation'] = utc_time
-			response.append(current)
-		return json.dumps(response)
-		return render_template('host_info.html', title="Home")
+			resp['actual_data']['time_of_ppl_generation'] = utc_time
+			return json.dumps(resp)
+			return render_template('host_info.html', title="Home")
+		else:
+			start_date = utils.ConvertStringToISODate(start_date)
+			end_date = utils.ConvertStringToISODate(end_date)
+			cursor = connection.FetchPPLsRange(from_ip, start_date, end_date)
+			response = []
+			for i in range(cursor.count()):
+				current = cursor[i]
+				iso_time = current['actual_data']['time_of_ppl_generation']
+				utc_time = iso_time.isoformat()
+				current['actual_data']['time_of_ppl_generation'] = utc_time
+				response.append(current)
+			return json.dumps(response)
+			return render_template('host_info.html', title="Home")
+	except:
+		return """<center>
+			<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
+			</center>
+			"""
 
 def main():
 	print "Thread started"
@@ -143,7 +149,7 @@ def channel_hosts_list(c_req):
 
 if __name__ == "__main__":
 
-	thread = Thread(target=main)
-	thread.start()
+	#thread = Thread(target=main)
+	#thread.start()
 
 	socketio.run(app, '', port=3000, debug=True)
