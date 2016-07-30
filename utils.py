@@ -50,12 +50,22 @@ class BloomFilter(object):
 
 		#If bitarray is created from existing bitarray from mongodb database
 		else:
+			print "Type is : ",type(bloom_dict)
+			print bloom_dict['accumulator']
 			self.ip = str(bloom_dict['ip'])
 			self.capacity = int(bloom_dict['capacity'])
 			self.error_rate = float(bloom_dict['error_rate'])
 			self.hash_count = int(bloom_dict['hash_count'])
 			self.bits_count = int(bloom_dict['bits_count'])
-			self.bit_array = base64.b64decode(bloom_dict['accumulator'])	#bitarray.frombytes(bloom_dict['bit_array'])
+			self.bit_array = bitarray()
+			data = bloom_dict['accumulator']
+			for i in range(len(data)):
+				letter  = data[i]
+				if letter == '1':
+					self.bit_array.append(1)
+				else:
+					self.bit_array.append(0)
+
 			printMessage(3, "Creating a bitarray from database")
 
 
@@ -79,9 +89,15 @@ class BloomFilter(object):
 		bloom_dict['error_rate'] = self.error_rate
 		bloom_dict['hash_count'] = self.hash_count
 		bloom_dict['bits_count'] = self.bits_count
-		bloom_dict['accumulator'] = base64.b64encode(self.bit_array)
+		str_accumulator = ""
+		for i in range(len(self.bit_array)):
+			bit = self.bit_array[i]
+			if bit == True:
+				str_accumulator += "1"
+			else:
+				str_accumulator += "0"
+		bloom_dict['accumulator'] = str_accumulator
 		return bloom_dict
-
 
 def bloom_filter_lookup(bf, word):
 	start = datetime.datetime.now().isoformat()
@@ -162,17 +178,37 @@ def Get_RSA_key(agency_name):
 	private = key
 	return (public, private)
 
-def EncryptData(data, public_key):
-	printMessage(10, "Encrypting with public key : " + public_key.exportKey("PEM"))
-	encrypted_raw, = public_key.encrypt(data, 1024)
+def EncryptData(dict_data, encrypting_key, dict_keys=None):
+	printMessage(10, "Encrypting with key : " + encrypting_key.exportKey("PEM"))
+	data = ""
+	if dict_keys == None:
+		for index, val in dict_data.iteritems():
+			data += str(index)+ "=" + str(val) + ","
+	else:
+		for index in dict_keys:
+			data += str(index) + "=" + str(dict_data[index]) + ","
+	data = data[:-1]
+
+	return encrypt_data(data, encrypting_key)
+
+def encrypt_data(str_data, encrypting_key):
+	encrypted_raw, = encrypting_key.encrypt(str_data, 1024)
 	encrypted = base64.b64encode(encrypted_raw)
 	return encrypted
 
-def DecryptData(data, private_key):
-	printMessage(10, "Decrypting with private key : " + private_key.exportKey("PEM"))
+def DecryptData(str_data, decrypting_key):
+	decrypted = decrypt_data(str_data, decrypting_key)
+	arr_key_val = decrypted.split(',')
+	dict_data = {}
+	for pair in arr_key_val:
+		key, val = pair.split('=')
+		dict_data[key] = val
+	return dict_data
+
+def decrypt_data(str_data, decrypting_key):
+	printMessage(10, "Decrypting with key : " + decrypting_key.exportKey("PEM"))
 	encrypted_raw = base64.b64decode(data)
-	decrypted = private_key.decrypt(encrypted_raw)
-	return decrypted
+	return decrypting_key.decrypt(encrypted_raw)
 
 def CreateLogChain(encrypted_log_entry, prev_log_chain):
 	data_to_hash = str(encrypted_log_entry) + str(prev_log_chain)
@@ -186,7 +222,7 @@ def SequenceVerification(prev_dble, next_dble):
 
 def generate_signature(private_key, data):
 	hashed = get_hash(str(data))
-	temp_data = EncryptData(hashed, private_key)
+	temp_data = encrypt_data(hashed, private_key)
 	signature_dict = {}
 	signature_dict['actual_data'] = data
 	signature_dict['signature'] = temp_data
@@ -202,11 +238,12 @@ def GeneratePPL():
 		accumulator = ast.literal_eval(dumps(accumulator))
 		print(1, accumulator)
 		time_of_ppl_generation = datetime.datetime.now()
-		accumulator['time_of_ppl_generation'] = time_of_ppl_generation
-		accumulator.pop('_id', None)
-		data = accumulator
+		data = ""
+		data += "accumulator=" + accumulator['accumulator'] + ",time=" + time_of_ppl_generation.isoformat()
 		public_key, private_key = Get_RSA_key("CSP")
 		ppl_dict = generate_signature(private_key, data)
+		ppl_dict['time_of_ppl_generation'] = time_of_ppl_generation
+		ppl_dict['ip'] = accumulator['ip']
 		connection.SavePPL(ppl_dict)
 
 

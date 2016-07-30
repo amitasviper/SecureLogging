@@ -35,7 +35,7 @@ from flask_socketio import SocketIO, send, emit
 
 from threading import Thread
 
-utils.DEBUG_LEVEL = 1
+utils.DEBUG_LEVEL = 4
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode=async_mode)
@@ -60,9 +60,9 @@ def get_ppl_details():
 		if end_date == None:
 			start_date = utils.ConvertStringToISODate(start_date)
 			resp = connection.FetchPPL(from_ip, start_date)
-			iso_time = resp['actual_data']['time_of_ppl_generation']
+			iso_time = resp['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
-			resp['actual_data']['time_of_ppl_generation'] = utc_time
+			resp['time_of_ppl_generation'] = utc_time
 			return json.dumps(resp)
 			return render_template('host_info.html', title="Home")
 		else:
@@ -72,9 +72,9 @@ def get_ppl_details():
 			response = []
 			for i in range(cursor.count()):
 				current = cursor[i]
-				iso_time = current['actual_data']['time_of_ppl_generation']
+				iso_time = current['time_of_ppl_generation']
 				utc_time = iso_time.isoformat()
-				current['actual_data']['time_of_ppl_generation'] = utc_time
+				current['time_of_ppl_generation'] = utc_time
 				response.append(current)
 			return json.dumps(response)
 			return render_template('host_info.html', title="Home")
@@ -97,7 +97,7 @@ def main():
 		print log_entry
 		
 		encrypted_log_entry = {}
-		encrypted_log_entry['encrypted_log'] = utils.EncryptData(str(log_entry), public_key)
+		encrypted_log_entry['encrypted_log'] = utils.EncryptData(log_entry, public_key, dict_keys=['from_ip', 'to_ip', 'port','time'])
 		encrypted_log_entry['from_ip'] = log_entry['from_ip']
 		encrypted_log_entry['time'] = log_entry['time']
 
@@ -111,22 +111,13 @@ def main():
 	
 		if current == None:
 			bloom_filter = utils.BloomFilter(ip=encrypted_log_entry['from_ip'], capacity=200, error_rate=10)
-			bloom_filter.AddToFilter(str(encrypted_log_entry))
 	
 		else:
-			print "Generating from database : ", current
 			bloom_filter = utils.BloomFilter(bloom_dict=current)
 
+		bloom_filter.AddToFilter(encrypted_log_entry['encrypted_log'])
 		connection.update_accumulator(bloom_filter.Serialise())
 	
-			#time.sleep(0.1)
-	
-		"""break
-
-		for i in range(cursor.count()-1):
-			print utils.SequenceVerification(cursor[i+1], cursor[i])
-	
-		return"""
 	utils.GeneratePPL()
 
 @socketio.on('channel_logs_req')
@@ -137,9 +128,9 @@ def channel_hosts_list(c_req):
 	response = []
 	for i in range(cursor.count()):
 		current = cursor[i]
-		iso_time = current['actual_data']['time_of_ppl_generation']
+		iso_time = current['time_of_ppl_generation']
 		utc_time = iso_time.isoformat()
-		current['actual_data']['time_of_ppl_generation'] = utc_time
+		current['time_of_ppl_generation'] = utc_time
 		response.append(current)
 	#print "Response : ", response
 	print "Size of json_data : ", len(response)
@@ -149,7 +140,7 @@ def channel_hosts_list(c_req):
 
 if __name__ == "__main__":
 
-	#thread = Thread(target=main)
-	#thread.start()
+	thread = Thread(target=main)
+	thread.start()
 
 	socketio.run(app, '', port=3000, debug=True)

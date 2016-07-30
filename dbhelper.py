@@ -9,7 +9,7 @@ class MConnection():
 		self.database_server_port = 27017
 
 		self.database_name = "freelancer"
-		self.collection_name = "cloud_logs"
+		self.collection_name = "logs_storage"
 		self.collection_name_accumulator = "proof_storage"
 		self.collection_name_PPL = "ppl_storage"
 
@@ -33,7 +33,6 @@ class MConnection():
 		current_date = str(datetime.now().date())
 		#acc = acc.tobytes()
 		data = {}
-		updated_data = {}
 		data['time'] = current_date
 		utils.printMessage(10, accumulator_entry)
 		data['ip'] = accumulator_entry['ip']
@@ -43,7 +42,6 @@ class MConnection():
 		#	print "Inserting : ", data
 		#	local_collection.insert_one(data)
 		#else:
-		updated_data['accumulator'] = accumulator_entry['accumulator']
 		utils.printMessage(10, accumulator_entry)
 		local_collection.update(data, {"$set": accumulator_entry}, upsert=True)
 
@@ -122,7 +120,7 @@ class MConnection():
 	def FetchPPLsRange(self, ip, start_date, end_date):
 		local_collection =self.collection_PPL
 
-		data_to_search = {'actual_data.ip' : ip, 'actual_data.time_of_ppl_generation': {"$gte" : start_date, "$lte" : end_date} }
+		data_to_search = {'ip' : ip, 'time_of_ppl_generation': {"$gte" : start_date, "$lte" : end_date} }
 
 		cursor = local_collection.find(data_to_search, {'_id':0, 'time':0})
 
@@ -131,7 +129,7 @@ class MConnection():
 	def FetchPPL(self, ip, time):
 		local_collection = self.collection_PPL
 
-		data_to_search = {'actual_data.ip' : ip, 'actual_data.time_of_ppl_generation' : time }
+		data_to_search = {'ip' : ip, 'time_of_ppl_generation' : time }
 
 		cursor = local_collection.find(data_to_search, {'_id':0, 'time':0})  #.limit(limit);
 
