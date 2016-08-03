@@ -26,7 +26,6 @@ elif async_mode == 'gevent':
 	from gevent import monkey
 	monkey.patch_all()
 
-
 import utils, dbhelper
 from dummy_data import GetDummydata
 import time, random, json, urllib2, requests
@@ -63,8 +62,7 @@ def get_ppl_details():
 			iso_time = resp['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
 			resp['time_of_ppl_generation'] = utc_time
-			return json.dumps(resp)
-			return render_template('host_info.html', title="Home")
+			return render_template('ppldetails.html', ppl_info=json.dumps(resp))
 		else:
 			start_date = utils.ConvertStringToISODate(start_date)
 			end_date = utils.ConvertStringToISODate(end_date)
@@ -76,8 +74,7 @@ def get_ppl_details():
 				utc_time = iso_time.isoformat()
 				current['time_of_ppl_generation'] = utc_time
 				response.append(current)
-			return json.dumps(response)
-			return render_template('host_info.html', title="Home")
+			return render_template('ppldetails.html', ppl_info=json.dumps(response))
 	except:
 		return """<center>
 			<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
@@ -128,6 +125,7 @@ def channel_hosts_list(c_req):
 	response = []
 	for i in range(cursor.count()):
 		current = cursor[i]
+		print "*******", type(current)
 		iso_time = current['time_of_ppl_generation']
 		utc_time = iso_time.isoformat()
 		current['time_of_ppl_generation'] = utc_time
@@ -135,12 +133,28 @@ def channel_hosts_list(c_req):
 	#print "Response : ", response
 	print "Size of json_data : ", len(response)
 	js = json.dumps(response)
-	print js
+	#print js
 	socketio.emit('channel_logs_resp', js)
+
+@socketio.on('channel_keys_req')
+def channel_keys(c_req):
+	global socketio
+	print "Client requested for keys"
+	cursor = connection.FetchAllPPl()
+	response = []
+	public , _ = utils.Get_RSA_key("LEA")
+	res = {'AgencyName' : 'LEA', 'keyval' : public.exportKey()}
+	response.append(res)
+	public , _ = utils.Get_RSA_key("CSP")
+	res = {'AgencyName' : 'CSP', 'keyval' : public.exportKey()}
+	response.append(res)
+	js = json.dumps(response)
+	print js
+	socketio.emit('channel_keys_resp', js)
 
 if __name__ == "__main__":
 
-	thread = Thread(target=main)
-	thread.start()
+	#thread = Thread(target=main)
+	#thread.start()
 
 	socketio.run(app, '', port=3000, debug=True)

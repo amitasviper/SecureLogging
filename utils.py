@@ -278,6 +278,14 @@ def get_rsa_key(agency_name):
 			save_key(rsa_key, "CloudServiceProvider")
 			return rsa_key
 
+def VerifySignature(public_key_str, actual_data, signature):
+	public_key = RSA.importKey(public_key_str)
+	ppl_dict = generate_signature(public_key, actual_data)
+	if ppl_dict['signature'] == signature:
+		print "Authenticity Verification PASSED"
+	else:
+		print "Authenticity Verification FAILED"
+
 def ConvertStringToISODate(date_str):
 	return datetime.datetime.strptime( date_str, "%Y-%m-%dT%H:%M:%S.%f" )
 
