@@ -26,7 +26,7 @@ elif async_mode == 'gevent':
 	from gevent import monkey
 	monkey.patch_all()
 
-import utils, dbhelper, os
+import utils, dbhelper, os, unicodedata
 from dummy_data import GetDummydata
 import time, random, json, urllib2, requests
 from flask import Flask, render_template, url_for, request, jsonify, Response, send_from_directory
@@ -84,7 +84,8 @@ def get_ppl_details():
 			iso_time = resp['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
 			resp['time_of_ppl_generation'] = utc_time
-			return render_template('ppldetails.html', ppl_info=json.dumps(resp))
+			return render_template('ppldetails.html')
+			#return render_template('ppldetails.html', ppl_info=json.dumps(resp))
 		else:
 			start_date = utils.ConvertStringToISODate(start_date)
 			end_date = utils.ConvertStringToISODate(end_date)
@@ -96,7 +97,8 @@ def get_ppl_details():
 				utc_time = iso_time.isoformat()
 				current['time_of_ppl_generation'] = utc_time
 				response.append(current)
-			return render_template('ppldetails.html', ppl_info=json.dumps(response))
+			return render_template('ppldetails.html')
+			#return render_template('ppldetails.html', ppl_info=json.dumps(response))
 	except:
 		return """<center>
 			<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
@@ -111,7 +113,7 @@ def main():
 
 	global connection
 
-	public_key, private_key = utils.Get_RSA_key("LEA")
+	public_key = utils.Get_RSA_key("LEA", "public")
 
 	cursor = connection.fetch_all()
 
@@ -168,10 +170,10 @@ def channel_keys(c_req):
 	print "Client requested for keys"
 	cursor = connection.FetchAllPPl()
 	response = []
-	public , _ = utils.Get_RSA_key("LEA")
+	public = utils.Get_RSA_key("LEA", "public")
 	res = {'AgencyName' : 'LEA', 'keyval' : public.exportKey()}
 	response.append(res)
-	public , _ = utils.Get_RSA_key("CSP")
+	public = utils.Get_RSA_key("CSP", "public")
 	res = {'AgencyName' : 'CSP', 'keyval' : public.exportKey()}
 	response.append(res)
 	js = json.dumps(response)
@@ -208,13 +210,16 @@ def channel_ppls(ppls_query):
 			iso_time = current['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
 			current['time_of_ppl_generation'] = utc_time
+			print type(current['signature'])
+			current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
+			print type(current['signature'])
 			resp.append(current)
 	socketio.emit('channel_ppl_resp', json.dumps(resp))
 
 @socketio.on('channel_ppl_verify_req')
 def channel_ppls_verify(data):
 	global socketio
-
+	index, data = data.split("****")
 	actual_data, sig = data.split("$####$")
 	print actual_data, "\n",sig
 	filepath = utils.get_key_path("CSP", "public")
@@ -224,11 +229,11 @@ def channel_ppls_verify(data):
 
 	res = utils.VerifySignature(key_content, data, sig)
 
-	socketio.emit('channel_ppl_verify_resp', res)
+	socketio.emit('channel_ppl_verify_resp'+index, True)
 
 if __name__ == "__main__":
 
 	thread = Thread(target=main)
 	thread.start()
 
-	socketio.run(app, '', port=3000, debug=True)
+	socketio.run(app, '', port=4000, debug=True)

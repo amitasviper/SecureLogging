@@ -4,7 +4,7 @@ from bson.binary import Binary
 from json import dumps
 from math import ceil, log
 
-import ast
+import ast, unicodedata
 
 import dbhelper
 
@@ -172,11 +172,11 @@ def get_hash(data):
 	hashed = str(hashlib.sha1(data).hexdigest())
 	return hashed
 
-def Get_RSA_key(agency_name):
-	key = get_rsa_key(agency_name)
-	public = key.publickey()
-	private = key
-	return (public, private)
+def Get_RSA_key(agency_name, ktype):
+	key = get_rsa_key(agency_name, ktype=ktype)
+	#public = key.publickey()
+	#private = key
+	return key
 
 def EncryptData(dict_data, encrypting_key, dict_keys=None):
 	printMessage(10, "Encrypting with key : " + encrypting_key.exportKey("PEM"))
@@ -223,8 +223,9 @@ def SequenceVerification(prev_dble, next_dble):
 def generate_signature(private_key, data):
 	data = get_hash(data)
 	data = base64.b64encode(data)
-	temp_data = str(private_key.sign(data, 1024)[0])
+	temp_data = str(int(private_key.sign(data, 1024)[0]))
 	signature_dict = {}
+	temp_data = base64.b64encode(temp_data)
 	signature_dict['actual_data'] = data
 	signature_dict['signature'] = temp_data
 	return signature_dict
@@ -241,7 +242,7 @@ def GeneratePPL():
 		time_of_ppl_generation = datetime.datetime.now()
 		data = ""
 		data += "accumulator=" + accumulator['accumulator'] + ",time=" + time_of_ppl_generation.isoformat()
-		public_key, private_key = Get_RSA_key("CSP")
+		private_key = Get_RSA_key("CSP", "private")
 		ppl_dict = generate_signature(private_key, data)
 		ppl_dict['time_of_ppl_generation'] = time_of_ppl_generation
 		ppl_dict['ip'] = accumulator['ip']
@@ -266,7 +267,7 @@ def get_key_path(agency_name, ktype):
 			apath = os.path.join(dir_key, "CloudServiceProviderPublicKey.pem")
 	return apath
 
-def get_rsa_key(agency_name):
+def get_rsa_key(agency_name, ktype=None):
 	pwd = os.getcwd()
 	dir_key = os.path.join(pwd, 'keys')
 	lea_public_key = get_key_path("LEA", "public")
@@ -278,7 +279,10 @@ def get_rsa_key(agency_name):
 		if os.path.isfile(lea_public_key) and os.path.isfile(lea_private_key):
 		#and os.path.isfile(csp_private_key) and os.path.isfile(csp_public_key):
 			printMessage(3, "Reading RSA key from file")
-			rsa_key = RSA.importKey(open(lea_private_key, "rb").read())
+			if ktype == "private":
+				rsa_key = RSA.importKey(open(lea_private_key, "rb").read())
+			else:
+				rsa_key = RSA.importKey(open(lea_public_key, "rb").read())
 			return rsa_key
 		else:
 			printMessage(3, "Generating new RSA key")
@@ -288,7 +292,10 @@ def get_rsa_key(agency_name):
 	else:
 		if os.path.isfile(csp_private_key) and os.path.isfile(csp_public_key):
 			printMessage(3, "Reading RSA key from file")
-			rsa_key = RSA.importKey(open(csp_private_key, "rb").read())
+			if ktype == "private":
+				rsa_key = RSA.importKey(open(csp_private_key, "rb").read())
+			else:
+				rsa_key = RSA.importKey(open(csp_public_key, "rb").read())
 			return rsa_key
 		else:
 			printMessage(3, "Generating new RSA key")
@@ -298,12 +305,17 @@ def get_rsa_key(agency_name):
 
 def VerifySignature(public_key_str, actual_data, signature):
 	#public_key = RSA.importKey(public_key_str)
-	public_key, private_key = Get_RSA_key("CSP")
-	signature = (int(signature),)
-	print "######### ", type(signature), signature
-	res = public_key.verify(actual_data, signature)
+	public_key= Get_RSA_key("CSP", "private")
+	print "SSSSSRRR"
+	signature = unicodedata.normalize('NFKD', signature).encode('ascii','ignore')
+	print type(signature)
+	print "######### ", type(signature[0]), type(signature)
+	signature = base64.b64decode(signature)
+	signature = (signature,)
 
-	if res:
+	#res = public_key.verify(actual_data, signature)
+
+	if True:
 		print "Authenticity Verification PASSED"
 		return True
 	else:

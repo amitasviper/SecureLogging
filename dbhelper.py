@@ -1,7 +1,8 @@
 from pymongo import MongoClient
 from datetime import datetime
 import utils
-
+import pymongo
+pymongo.unicode_decode_output = True
 
 class MConnection():
 	def __init__(self, debug=0):
