@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}
+	{% if title %}
+		{{ title }}
+	{% else %}
+		Secure Logs
+	{% endif %}
+{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+    <table class="table table-striped table-bordered" id="table_keys_file">
+        <tr>
+            <th>S.No</th>
+            <th>Authority Name</th>
+            <th>Key Type</th>
+            <th>Key Link</th>
+        </tr>
+
+        <tr>
+            <td>1.</td>
+            <td>Cloud Service provider</td>
+            <td>Public</td>
+            <td><a href="/download/CSP">Download</a> (Right Click and save linked file)</td>
+        </tr>
+
+        <tr>
+            <td>2.</td>
+            <td>Law Enforcement Agency</td>
+            <td>Public</td>
+            <td><a href="/download/LEA">Download</a> (Right Click and save linked file)</td>
+        </tr>
+    </table>
+{% endblock %}

@@ -246,15 +246,31 @@ def GeneratePPL():
 		ppl_dict['ip'] = accumulator['ip']
 		connection.SavePPL(ppl_dict)
 
+def get_key_path(agency_name, ktype):
+	pwd = os.getcwd()
+	dir_key = os.path.join(pwd, 'keys')
 
+	apath = None
+
+	if agency_name == "LEA":
+		if ktype == "private":
+			apath  = os.path.join(dir_key, "LawEnforcementAgencyPrivateKey.pem")
+		else:
+			apath = os.path.join(dir_key, "LawEnforcementAgencyPublicKey.pem")
+	else:
+		if ktype == "private":
+			apath = os.path.join(dir_key, "CloudServiceProviderPrivateKey.pem")
+		else:
+			apath = os.path.join(dir_key, "CloudServiceProviderPublicKey.pem")
+	return apath
 
 def get_rsa_key(agency_name):
 	pwd = os.getcwd()
 	dir_key = os.path.join(pwd, 'keys')
-	lea_public_key = os.path.join(dir_key, "LawEnforcementAgencyPublicKey.txt")
-	lea_private_key = os.path.join(dir_key, "LawEnforcementAgencyPrivateKey.txt")
-	csp_public_key = os.path.join(dir_key, "CloudServiceProviderPublicKey.txt")
-	csp_private_key = os.path.join(dir_key, "CloudServiceProviderPrivateKey.txt")
+	lea_public_key = get_key_path("LEA", "public")
+	lea_private_key = get_key_path("LEA", "private")
+	csp_public_key = get_key_path("CSP", "public")
+	csp_private_key = get_key_path("CSP", "private")
 
 	if agency_name == "LEA":
 		if os.path.isfile(lea_public_key) and os.path.isfile(lea_private_key):

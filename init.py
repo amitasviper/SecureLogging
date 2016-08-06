@@ -26,10 +26,10 @@ elif async_mode == 'gevent':
 	from gevent import monkey
 	monkey.patch_all()
 
-import utils, dbhelper
+import utils, dbhelper, os
 from dummy_data import GetDummydata
 import time, random, json, urllib2, requests
-from flask import Flask, render_template, url_for, request, jsonify, Response
+from flask import Flask, render_template, url_for, request, jsonify, Response, send_from_directory
 from flask_socketio import SocketIO, send, emit
 
 from threading import Thread
@@ -48,6 +48,28 @@ connection = dbhelper.MConnection(debug=utils.DEBUG_LEVEL)
 def home():
 	#print url_for('static', filename='../js/statistics.js')
 	return render_template('home.html', title="Home")
+
+
+@app.route('/keys')
+def keys():
+	return render_template('downloadKeys.html', title="Download Keys")
+
+
+@app.route('/download/<filename>', methods=['GET', 'POST'])
+def download(filename):
+	filepath = None
+	if filename == "LEA":
+		filepath = utils.get_key_path("LEA", "public")
+	else:
+		filepath = utils.get_key_path("CSP", "public")
+		content = ""
+	with open(filepath, 'r') as content_file:
+		content = content_file.read()
+	return Response(
+        content,
+        mimetype='application/octet-stream',
+        headers={"Content-disposition":
+                 "attachment; filename=" + filename +".pem"})
 
 @app.route('/getppldetails', methods=['GET', 'POST'])
 def get_ppl_details():
