@@ -49,7 +49,12 @@
         </table>
     </form>
 
-    <center><button type="reset" class="btn btn-primary" onclick="prepareGetRequest()">Fetch PPLs</button></center><br>
+    <center>
+        <button type="reset" class="btn btn-primary" onclick="prepareGetRequest(1)">Fetch PPLs</button>
+
+        <button type="reset" class="btn btn-info" onclick="prepareGetRequest(2)">Fetch Logs</button>
+
+    </center><br>
 
     <table class="table table-striped table-bordered" id="table_logs">
         <tr>
@@ -61,7 +66,7 @@
     </table>
 
     <script>
-        function prepareGetRequest()
+        function prepareGetRequest(flag)
         {
             var ip = document.getElementById('ip').value;
 
@@ -84,18 +89,41 @@
             var timestamp1 = document.getElementById('timestamp1').value;
             var timestamp2 = document.getElementById('timestamp2').value;
 
-            if (timestamp1 && timestamp2)
-            {
-                var url = '/getppldetails?from_ip=' + ip + "&start_date=" + timestamp1 + "&end_date=" + timestamp2;
-                window.location.href = url;
-            }
 
+            if(flag == 1)
+            {
+                if (timestamp1 && timestamp2)
+                {
+                    var url = '/getppldetails?from_ip=' + ip + "&start_date=" + timestamp1 + "&end_date=" + timestamp2;
+                    window.location.href = url;
+                }
+    
+                else
+                {
+                    var url = '/getppldetails?from_ip=' + ip + "&start_date=" + start_year + "-" + start_month + "-" + start_day + "T" + start_hour + ":" +     start_minute + ":" + start_second + "." + start_msecond + "&end_date="  + end_year + "-" + end_month + "-" + end_day + "T" + end_hour + ":" + end_minute + ":" + end_second + "." + end_msecond;
+                    window.location.href = url;
+    
+                };
+
+            }
             else
             {
-                var url = '/getppldetails?from_ip=' + ip + "&start_date=" + start_year + "-" + start_month + "-" + start_day + "T" + start_hour + ":" + start_minute + ":" + start_second + "." + start_msecond + "&end_date=" + end_year + "-" + end_month + "-" + end_day + "T" + end_hour + ":" + end_minute + ":" + end_second + "." + end_msecond;
-                window.location.href = url;
+                if (timestamp1 && timestamp2)
+                {
+                    var url = '/getlogs?from_ip=' + ip + "&start_date=" + timestamp1 + "&end_date=" + timestamp2;
+                    window.location.href = url;
+                }
+    
+                else
+                {
+                    var url = '/getlogs?from_ip=' + ip + "&start_date=" + start_year + "-" + start_month + "-" + start_day + "T" + start_hour + ":" +     start_minute + ":" + start_second + "." + start_msecond + "&end_date="  + end_year + "-" + end_month + "-" + end_day + "T" + end_hour + ":" + end_minute + ":" + end_second + "." + end_msecond;
+                    window.location.href = url;
+    
+                };
 
-            };
+            }
+
+            
 
 
         }

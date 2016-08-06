@@ -71,45 +71,54 @@ def download(filename):
         headers={"Content-disposition":
                  "attachment; filename=" + filename +".pem"})
 
-@app.route('/getppldetails', methods=['GET', 'POST'])
+@app.route('/getppldetails')
 def get_ppl_details():
 	try:
-		from_ip = request.args.get('from_ip')
-		start_date = request.args.get('start_date')
-		end_date = request.args.get('end_date')
-		print from_ip, start_date, end_date
-		if end_date == None:
-			start_date = utils.ConvertStringToISODate(start_date)
-			resp = connection.FetchPPL(from_ip, start_date)
-			iso_time = resp['time_of_ppl_generation']
-			utc_time = iso_time.isoformat()
-			resp['time_of_ppl_generation'] = utc_time
-			return render_template('ppldetails.html')
-			#return render_template('ppldetails.html', ppl_info=json.dumps(resp))
-		else:
-			start_date = utils.ConvertStringToISODate(start_date)
-			end_date = utils.ConvertStringToISODate(end_date)
-			cursor = connection.FetchPPLsRange(from_ip, start_date, end_date)
-			response = []
-			for i in range(cursor.count()):
-				current = cursor[i]
-				iso_time = current['time_of_ppl_generation']
-				utc_time = iso_time.isoformat()
-				current['time_of_ppl_generation'] = utc_time
-				response.append(current)
-			return render_template('ppldetails.html')
-			#return render_template('ppldetails.html', ppl_info=json.dumps(response))
+		return render_template('ppldetails.html')
+		#return render_template('ppldetails.html', ppl_info=json.dumps(response))
 	except:
 		return """<center>
 			<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
 			</center>
 			"""
 
+@app.route('/getlogs', methods=['GET', 'POST'])
+def get_logs():
+	#try:
+	from_ip = request.args.get('from_ip')
+	start_date = request.args.get('start_date')
+	end_date = request.args.get('end_date')
+	print from_ip, start_date, end_date
+	if end_date == None:
+		start_date = utils.ConvertStringToISODate(start_date)
+		resp = connection.FetchPPL(from_ip, start_date)
+		iso_time = resp['time']
+		utc_time = iso_time.isoformat()
+		resp['time'] = utc_time
+		return render_template('logdetails.html')
+		#return render_template('ppldetails.html', ppl_info=json.dumps(resp))
+	else:
+		start_date = utils.ConvertStringToISODate(start_date)
+		end_date = utils.ConvertStringToISODate(end_date)
+		cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
+		response = []
+		for i in range(cursor.count()):
+			current = cursor[i]
+			iso_time = current['time']
+			utc_time = iso_time.isoformat()
+			current['time'] = utc_time
+			response.append(current)
+		return render_template('logdetails.html')
+		#return render_template('ppldetails.html', ppl_info=json.dumps(response))
+	#except:
+	return """<center>
+		<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
+		</center>
+		"""
+
+
 def main():
 	print "Thread started"
-
-	#utils.GeneratePPL()
-	return
 
 	global connection
 
@@ -192,29 +201,65 @@ def channel_ppls(ppls_query):
 		end_date = ppls_query[2][len("end_date="):]
 	start_date = ppls_query[1][len("start_date="):]
 	from_ip = ppls_query[0][len("from_ip="):]
-
+	resp = []
 	print "*****", from_ip, start_date, end_date
 	if end_date == None:
 		start_date = utils.ConvertStringToISODate(start_date)
-		resp = connection.FetchPPL(from_ip, start_date)
-		iso_time = resp['time_of_ppl_generation']
+		current = connection.FetchPPL(from_ip, start_date)
+		iso_time = current['time_of_ppl_generation']
 		utc_time = iso_time.isoformat()
-		resp['time_of_ppl_generation'] = utc_time
+		print type(current['signature'])
+		#current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
+		print type(current['signature'])
+		current['time_of_ppl_generation'] = utc_time
+		resp.append(current)
 	else:
 		start_date = utils.ConvertStringToISODate(start_date)
 		end_date = utils.ConvertStringToISODate(end_date)
 		cursor = connection.FetchPPLsRange(from_ip, start_date, end_date)
-		resp = []
 		for i in range(cursor.count()):
 			current = cursor[i]
 			iso_time = current['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
 			current['time_of_ppl_generation'] = utc_time
 			print type(current['signature'])
-			current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
+			#current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
 			print type(current['signature'])
 			resp.append(current)
 	socketio.emit('channel_ppl_resp', json.dumps(resp))
+
+@socketio.on('channel_log_req')
+def channel_logs(logs_query):
+	global socketio
+	print "Client requested for LOGS : ",logs_query 
+
+	from_ip, start_date, end_date = None, None, None
+
+	logs_query = logs_query.split('&')
+	if len(logs_query) > 2:
+		end_date = logs_query[2][len("end_date="):]
+	start_date = logs_query[1][len("start_date="):]
+	from_ip = logs_query[0][len("from_ip="):]
+	resp = []
+	print "*****", from_ip, start_date, end_date
+	if end_date == None:
+		start_date = utils.ConvertStringToISODate(start_date)
+		current = connection.FetchLogsRange(from_ip, start_date)
+		iso_time = current['time']
+		utc_time = iso_time.isoformat()
+		current['time'] = utc_time
+		resp.append(current)
+	else:
+		start_date = utils.ConvertStringToISODate(start_date)
+		end_date = utils.ConvertStringToISODate(end_date)
+		cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
+		for i in range(cursor.count()):
+			current = cursor[i]
+			iso_time = current['time']
+			utc_time = iso_time.isoformat()
+			current['time'] = utc_time
+			resp.append(current)
+	socketio.emit('channel_log_resp', json.dumps(resp))
 
 @socketio.on('channel_ppl_verify_req')
 def channel_ppls_verify(data):
@@ -229,11 +274,38 @@ def channel_ppls_verify(data):
 
 	res = utils.VerifySignature(key_content, data, sig)
 
-	socketio.emit('channel_ppl_verify_resp'+index, True)
+	socketio.emit('channel_ppl_verify_resp'+index, res)
+
+@socketio.on('channel_log_verify_req')
+def channel_log_verify(data):
+	global socketio
+	data = data[:-3]
+	print data
+	logs_arr = data.split(",,,")
+	i = 0
+	flag = True
+	while i < len(logs_arr)-1:
+		prev_dble = {}
+		current_dble = {}
+
+		prev = logs_arr[i].split("***")
+		prev_dble['encrypted_log'] = prev[0]
+		prev_dble['hash'] = prev[1]
+		i += 1
+
+		cur = logs_arr[i].split("***")
+		current_dble['encrypted_log'] = cur[0]
+		current_dble['hash'] = cur[1]
+		i += 1
+		flag = utils.SequenceVerification(prev_dble, current_dble)
+		if flag == False:
+			break
+	
+	socketio.emit('channel_log_verify_resp', flag)
 
 if __name__ == "__main__":
 
-	thread = Thread(target=main)
-	thread.start()
+	#thread = Thread(target=main)
+	#thread.start()
 
 	socketio.run(app, '', port=4000, debug=True)

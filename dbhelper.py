@@ -58,6 +58,15 @@ class MConnection():
 		else:
 			return cursor
 
+	def FetchLogsRange(self, ip, start_date, end_date):
+		local_collection = self.collection
+
+		data_to_search = {'from_ip' : ip, 'time': {"$gte" : start_date, "$lte" : end_date} }
+
+		cursor = local_collection.find(data_to_search, {'_id':0})
+
+		return cursor
+
 
 	def get_current_accumulator(self, ip):
 		local_collection = self.collection_accumulator

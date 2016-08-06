@@ -1,4 +1,6 @@
 from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_PSS
+from Crypto.Hash import SHA
 from bitarray import bitarray
 from bson.binary import Binary
 from json import dumps
@@ -215,17 +217,24 @@ def CreateLogChain(encrypted_log_entry, prev_log_chain):
 	current_log_chain = get_hash(data_to_hash)
 	return current_log_chain
 
-def SequenceVerification(prev_dble, next_dble):
-	data_to_hash = str(next_dble['encrypted_log']) + str(prev_dble['hash'])
+def SequenceVerification(prev_dble, current_dble):
+	data_to_hash = str(current_dble['encrypted_log']) + str(prev_dble['hash'])
 	current_log_chain = get_hash(data_to_hash)
-	return (current_log_chain == next_dble['hash'])
+	return (current_log_chain == current_dble['hash'])
 
 def generate_signature(private_key, data):
-	data = get_hash(data)
-	data = base64.b64encode(data)
-	temp_data = str(int(private_key.sign(data, 1024)[0]))
+	h = SHA.new()
+	h.update(data)
+
+	signer = PKCS1_PSS.new(private_key)
+	signature = signer.sign(h)
+
+	#hashed = get_hash(data)
+	#hashed = base64.b64encode(hashed)
+	#temp_data = str(private_key.sign(data, '')[0])
+	
 	signature_dict = {}
-	temp_data = base64.b64encode(temp_data)
+	temp_data = base64.b64encode(signature)
 	signature_dict['actual_data'] = data
 	signature_dict['signature'] = temp_data
 	return signature_dict
@@ -246,6 +255,7 @@ def GeneratePPL():
 		ppl_dict = generate_signature(private_key, data)
 		ppl_dict['time_of_ppl_generation'] = time_of_ppl_generation
 		ppl_dict['ip'] = accumulator['ip']
+		print "HHHHHHHHHHH--------------------------\n",ppl_dict
 		connection.SavePPL(ppl_dict)
 		print "Inseted PPL"
 
@@ -305,17 +315,22 @@ def get_rsa_key(agency_name, ktype=None):
 
 def VerifySignature(public_key_str, actual_data, signature):
 	#public_key = RSA.importKey(public_key_str)
-	public_key= Get_RSA_key("CSP", "private")
+	public_key= Get_RSA_key("CSP", "public")
 	print "SSSSSRRR"
-	signature = unicodedata.normalize('NFKD', signature).encode('ascii','ignore')
+	#signature = unicodedata.normalize('NFKD', signature).encode('ascii','ignore')
 	print type(signature)
-	print "######### ", type(signature[0]), type(signature)
+	signature = signature.strip()
 	signature = base64.b64decode(signature)
-	signature = (signature,)
+
+	h = SHA.new()
+	h.update(actual_data)
+
+	verifier = PKCS1_PSS.new(public_key)
+	res = verifier.verify(h, signature)
 
 	#res = public_key.verify(actual_data, signature)
 
-	if True:
+	if res:
 		print "Authenticity Verification PASSED"
 		return True
 	else:
