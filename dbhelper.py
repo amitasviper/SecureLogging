@@ -106,7 +106,7 @@ class MConnection():
 		except Exception, err:
 
 			if self.debug > 1:
-				print "[", self.debug, "]", "Unable to save current log_chain"
+				print "[", self.debug, "]", "Unable to save ppl"
 				print str(err)
 
 	def FetchAllPPl(self):

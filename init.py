@@ -34,7 +34,7 @@ from flask_socketio import SocketIO, send, emit
 
 from threading import Thread
 
-utils.DEBUG_LEVEL = 4
+utils.DEBUG_LEVEL = 10
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode=async_mode)
@@ -62,7 +62,7 @@ def download(filename):
 		filepath = utils.get_key_path("LEA", "public")
 	else:
 		filepath = utils.get_key_path("CSP", "public")
-		content = ""
+	content = ""
 	with open(filepath, 'r') as content_file:
 		content = content_file.read()
 	return Response(
@@ -105,6 +105,10 @@ def get_ppl_details():
 
 def main():
 	print "Thread started"
+
+	#utils.GeneratePPL()
+	return
+
 	global connection
 
 	public_key, private_key = utils.Get_RSA_key("LEA")
@@ -174,9 +178,57 @@ def channel_keys(c_req):
 	print js
 	socketio.emit('channel_keys_resp', js)
 
+@socketio.on('channel_ppl_req')
+def channel_ppls(ppls_query):
+	global socketio
+	print "Client requested for ppls : ",ppls_query 
+
+	from_ip, start_date, end_date = None, None, None
+
+	ppls_query = ppls_query.split('&')
+	if len(ppls_query) > 2:
+		end_date = ppls_query[2][len("end_date="):]
+	start_date = ppls_query[1][len("start_date="):]
+	from_ip = ppls_query[0][len("from_ip="):]
+
+	print "*****", from_ip, start_date, end_date
+	if end_date == None:
+		start_date = utils.ConvertStringToISODate(start_date)
+		resp = connection.FetchPPL(from_ip, start_date)
+		iso_time = resp['time_of_ppl_generation']
+		utc_time = iso_time.isoformat()
+		resp['time_of_ppl_generation'] = utc_time
+	else:
+		start_date = utils.ConvertStringToISODate(start_date)
+		end_date = utils.ConvertStringToISODate(end_date)
+		cursor = connection.FetchPPLsRange(from_ip, start_date, end_date)
+		resp = []
+		for i in range(cursor.count()):
+			current = cursor[i]
+			iso_time = current['time_of_ppl_generation']
+			utc_time = iso_time.isoformat()
+			current['time_of_ppl_generation'] = utc_time
+			resp.append(current)
+	socketio.emit('channel_ppl_resp', json.dumps(resp))
+
+@socketio.on('channel_ppl_verify_req')
+def channel_ppls_verify(data):
+	global socketio
+
+	actual_data, sig = data.split("$####$")
+	print actual_data, "\n",sig
+	filepath = utils.get_key_path("CSP", "public")
+	key_content = ""
+	with open(filepath, 'r') as content_file:
+		key_content = content_file.read()
+
+	res = utils.VerifySignature(key_content, data, sig)
+
+	socketio.emit('channel_ppl_verify_resp', res)
+
 if __name__ == "__main__":
 
-	#thread = Thread(target=main)
-	#thread.start()
+	thread = Thread(target=main)
+	thread.start()
 
 	socketio.run(app, '', port=3000, debug=True)

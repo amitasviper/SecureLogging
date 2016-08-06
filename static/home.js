@@ -1,5 +1,6 @@
 function get_data(){
     var socket = io.connect('http://' + document.domain + ':' + location.port);
+
     socket.emit('channel_logs_req', 'ready');
 
     socket.on('channel_logs_resp', function (data) {

@@ -15,7 +15,7 @@ import hashlib
 import base64
 import os
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 10
 
 connection = dbhelper.MConnection(debug=DEBUG_LEVEL)
 
@@ -162,10 +162,10 @@ def save_key(key, name):
 	private = key.exportKey("PEM")
 	public = key.publickey().exportKey("PEM")
 
-	with open(os.path.join(dir_key, name + "PrivateKey.txt"), 'wb') as f:
+	with open(os.path.join(dir_key, name + "PrivateKey.pem"), 'wb') as f:
 		f.write(private)
 
-	with open(os.path.join(dir_key, name + "PublicKey.txt"), 'wb') as f:
+	with open(os.path.join(dir_key, name + "PublicKey.pem"), 'wb') as f:
 		f.write(public)
 
 def get_hash(data):
@@ -207,7 +207,7 @@ def DecryptData(str_data, decrypting_key):
 
 def decrypt_data(str_data, decrypting_key):
 	printMessage(10, "Decrypting with key : " + decrypting_key.exportKey("PEM"))
-	encrypted_raw = base64.b64decode(data)
+	encrypted_raw = base64.b64decode(str_data)
 	return decrypting_key.decrypt(encrypted_raw)
 
 def CreateLogChain(encrypted_log_entry, prev_log_chain):
@@ -221,8 +221,9 @@ def SequenceVerification(prev_dble, next_dble):
 	return (current_log_chain == next_dble['hash'])
 
 def generate_signature(private_key, data):
-	hashed = get_hash(str(data))
-	temp_data = encrypt_data(hashed, private_key)
+	data = get_hash(data)
+	data = base64.b64encode(data)
+	temp_data = str(private_key.sign(data, 1024)[0])
 	signature_dict = {}
 	signature_dict['actual_data'] = data
 	signature_dict['signature'] = temp_data
@@ -245,6 +246,7 @@ def GeneratePPL():
 		ppl_dict['time_of_ppl_generation'] = time_of_ppl_generation
 		ppl_dict['ip'] = accumulator['ip']
 		connection.SavePPL(ppl_dict)
+		print "Inseted PPL"
 
 def get_key_path(agency_name, ktype):
 	pwd = os.getcwd()
@@ -295,12 +297,18 @@ def get_rsa_key(agency_name):
 			return rsa_key
 
 def VerifySignature(public_key_str, actual_data, signature):
-	public_key = RSA.importKey(public_key_str)
-	ppl_dict = generate_signature(public_key, actual_data)
-	if ppl_dict['signature'] == signature:
+	#public_key = RSA.importKey(public_key_str)
+	public_key, private_key = Get_RSA_key("CSP")
+	signature = (int(signature),)
+	print "######### ", type(signature), signature
+	res = public_key.verify(actual_data, signature)
+
+	if res:
 		print "Authenticity Verification PASSED"
+		return True
 	else:
 		print "Authenticity Verification FAILED"
+		return False
 
 def ConvertStringToISODate(date_str):
 	return datetime.datetime.strptime( date_str, "%Y-%m-%dT%H:%M:%S.%f" )
