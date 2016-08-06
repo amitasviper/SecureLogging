@@ -241,6 +241,7 @@ def channel_logs(logs_query):
 	start_date = logs_query[1][len("start_date="):]
 	from_ip = logs_query[0][len("from_ip="):]
 	resp = []
+	from_ip = None
 	print "*****", from_ip, start_date, end_date
 	if end_date == None:
 		start_date = utils.ConvertStringToISODate(start_date)
@@ -279,6 +280,7 @@ def channel_ppls_verify(data):
 @socketio.on('channel_log_verify_req')
 def channel_log_verify(data):
 	global socketio
+	data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
 	data = data[:-3]
 	print data
 	logs_arr = data.split(",,,")
@@ -296,7 +298,8 @@ def channel_log_verify(data):
 		cur = logs_arr[i].split("***")
 		current_dble['encrypted_log'] = cur[0]
 		current_dble['hash'] = cur[1]
-		i += 1
+
+		print '\n\n',prev_dble,'\n\n' ,current_dble, '\n\n'
 		flag = utils.SequenceVerification(prev_dble, current_dble)
 		if flag == False:
 			break

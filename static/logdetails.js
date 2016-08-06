@@ -17,7 +17,7 @@ function get_logs(){
           //actual_data = actual_data.replace(/'/g, '"');
           //actual_data = JSON.parse(JSON.stringify(actual_data));
           //actual_data = JSON.parse(actual_data);
-          $('#table_log_details').append('<tr id="' + index + '"><td>' + index +'</td><td><input type="text" class="form-control" value="' + value.from_ip + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" class="accumulator" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><br><p>Log Hash Chain:</p><textarea class="form-control" cols="130" rows="1" >' + value.hash +'</textarea></td><td><button class="' + index + 'btn btn btn-primary" onclick="rowFunction(' + index + ')">Add to Chain</button></td></tr>')
+          $('#table_log_details').append('<tr id="' + index + '"><td style="vertical-align:middle">' + index +'</td><td style="vertical-align:middle"><input type="text" class="form-control" value="' + value.from_ip + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" class="accumulator" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><p>Log Hash Chain:</p><textarea class="form-control" cols="130" rows="1" >' + value.hash +'</textarea></td><td><button class="' + index + 'btn btn btn-primary" onclick="rowFunction(' + index + ')">Add to Chain</button></td></tr>')
         });
     });
 }
@@ -27,7 +27,7 @@ function rowFunction(index)
   //var n = el.parentNode.parentNode.cells[2].getElementByClassName('accumulator');
   var row = $("#" + index);
   var elog = row.children()[2].childNodes.item(1).value;
-  var hash_chain = row.children()[2].childNodes.item(5).value;
+  var hash_chain = row.children()[2].childNodes.item(4).value;
   //Combine(actual_data, signature, index);
 
   var x = document.getElementById("query");
@@ -41,6 +41,13 @@ function rowFunction(index)
       button.className = index + "btn btn btn-success";
       button.textContent = "Added";
   }
+
+  var button = document.getElementById('btn-order');
+  
+    if(button.className.split(" ")[0] == "btn"){
+        button.className = "btn btn btn-info";
+        button.textContent = "Verify Sequence";
+    }
 
 
 }
@@ -64,7 +71,20 @@ function checkOrder()
   socket.emit('channel_log_verify_req', data);
 
   socket.on('channel_log_verify_resp', function (data) {
-        console.log(data);
+
+    var button = document.getElementById('btn-order');
+  
+    if(button.className.split(" ")[0] == "btn"){
+      if (data){
+        button.className = "btn btn btn-success";
+        button.textContent = "Success";
+      }
+      else{
+        button.className = "btn btn btn-danger";
+        button.textContent = "Failed";
+      }
+    }
+
   });
 }
 

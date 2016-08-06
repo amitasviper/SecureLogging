@@ -60,9 +60,10 @@ class MConnection():
 
 	def FetchLogsRange(self, ip, start_date, end_date):
 		local_collection = self.collection
-
-		data_to_search = {'from_ip' : ip, 'time': {"$gte" : start_date, "$lte" : end_date} }
-
+		if ip != None:
+			data_to_search = {'from_ip' : ip, 'time': {"$gte" : start_date, "$lte" : end_date} }
+		else:
+			data_to_search = {'time': {"$gte" : start_date, "$lte" : end_date} }
 		cursor = local_collection.find(data_to_search, {'_id':0})
 
 		return cursor
