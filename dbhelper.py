@@ -25,7 +25,7 @@ class MConnection():
 
 		local_collection = self.collection
 
-		cursor = local_collection.find({},{'_id':0, 'time':0})  #.limit(limit);
+		cursor = local_collection.find({},{'_id':0})  #.limit(limit);
 
 		return cursor
 

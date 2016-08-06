@@ -117,7 +117,7 @@ def get_logs():
 		"""
 
 
-def main():
+def GenererateLogsOnUserRequest():
 	print "Thread started"
 
 	global connection
@@ -151,10 +151,11 @@ def main():
 
 		bloom_filter.AddToFilter(encrypted_log_entry['encrypted_log'])
 		connection.update_accumulator(bloom_filter.Serialise())
-	
+
+def GenereratePPLsOnUserRequest():
 	utils.GeneratePPL()
 
-@socketio.on('channel_logs_req')
+@socketio.on('channel_all_ppls_req')
 def channel_hosts_list(c_req):
 	global socketio
 	print "Client requested for logs"
@@ -162,7 +163,6 @@ def channel_hosts_list(c_req):
 	response = []
 	for i in range(cursor.count()):
 		current = cursor[i]
-		print "*******", type(current)
 		iso_time = current['time_of_ppl_generation']
 		utc_time = iso_time.isoformat()
 		current['time_of_ppl_generation'] = utc_time
@@ -171,7 +171,7 @@ def channel_hosts_list(c_req):
 	print "Size of json_data : ", len(response)
 	js = json.dumps(response)
 	#print js
-	socketio.emit('channel_logs_resp', js)
+	socketio.emit('channel_all_ppls_resp', js)
 
 @socketio.on('channel_keys_req')
 def channel_keys(c_req):
@@ -208,9 +208,7 @@ def channel_ppls(ppls_query):
 		current = connection.FetchPPL(from_ip, start_date)
 		iso_time = current['time_of_ppl_generation']
 		utc_time = iso_time.isoformat()
-		print type(current['signature'])
 		#current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
-		print type(current['signature'])
 		current['time_of_ppl_generation'] = utc_time
 		resp.append(current)
 	else:
@@ -222,9 +220,7 @@ def channel_ppls(ppls_query):
 			iso_time = current['time_of_ppl_generation']
 			utc_time = iso_time.isoformat()
 			current['time_of_ppl_generation'] = utc_time
-			print type(current['signature'])
 			#current['signature'] = unicodedata.normalize('NFKD', current['signature']).encode('ascii','ignore')
-			print type(current['signature'])
 			resp.append(current)
 	socketio.emit('channel_ppl_resp', json.dumps(resp))
 
@@ -233,33 +229,41 @@ def channel_logs(logs_query):
 	global socketio
 	print "Client requested for LOGS : ",logs_query 
 
-	from_ip, start_date, end_date = None, None, None
-
-	logs_query = logs_query.split('&')
-	if len(logs_query) > 2:
-		end_date = logs_query[2][len("end_date="):]
-	start_date = logs_query[1][len("start_date="):]
-	from_ip = logs_query[0][len("from_ip="):]
 	resp = []
-	from_ip = None
-	print "*****", from_ip, start_date, end_date
-	if end_date == None:
-		start_date = utils.ConvertStringToISODate(start_date)
-		current = connection.FetchLogsRange(from_ip, start_date)
-		iso_time = current['time']
-		utc_time = iso_time.isoformat()
-		current['time'] = utc_time
-		resp.append(current)
-	else:
-		start_date = utils.ConvertStringToISODate(start_date)
-		end_date = utils.ConvertStringToISODate(end_date)
-		cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
+	if logs_query == None:
+		cursor = connection.fetch_all()
 		for i in range(cursor.count()):
 			current = cursor[i]
 			iso_time = current['time']
 			utc_time = iso_time.isoformat()
 			current['time'] = utc_time
 			resp.append(current)
+	else:
+		from_ip, start_date, end_date = None, None, None
+		logs_query = logs_query.split('&')
+		if len(logs_query) > 2:
+			end_date = logs_query[2][len("end_date="):]
+		start_date = logs_query[1][len("start_date="):]
+		from_ip = logs_query[0][len("from_ip="):]
+		from_ip = None
+		print "*****", from_ip, start_date, end_date
+		if end_date == None:
+			start_date = utils.ConvertStringToISODate(start_date)
+			current = connection.FetchLogsRange(from_ip, start_date)
+			iso_time = current['time']
+			utc_time = iso_time.isoformat()
+			current['time'] = utc_time
+			resp.append(current)
+		else:
+			start_date = utils.ConvertStringToISODate(start_date)
+			end_date = utils.ConvertStringToISODate(end_date)
+			cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
+			for i in range(cursor.count()):
+				current = cursor[i]
+				iso_time = current['time']
+				utc_time = iso_time.isoformat()
+				current['time'] = utc_time
+				resp.append(current)
 	socketio.emit('channel_log_resp', json.dumps(resp))
 
 @socketio.on('channel_ppl_verify_req')
@@ -305,6 +309,16 @@ def channel_log_verify(data):
 			break
 	
 	socketio.emit('channel_log_verify_resp', flag)
+
+@socketio.on('channel_function_request')
+def call_function(data):
+	global socketio
+	print "Got FUNCTION Req : ", data, type(data)
+	if data == 1:
+		thread = Thread(target=GenereratePPLsOnUserRequest)
+	else:
+		thread = Thread(target=GenererateLogsOnUserRequest)
+	thread.start()
 
 if __name__ == "__main__":
 
