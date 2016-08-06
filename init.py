@@ -46,7 +46,6 @@ connection = dbhelper.MConnection(debug=utils.DEBUG_LEVEL)
 @app.route('/')
 @app.route('/home')
 def home():
-	#print url_for('static', filename='../js/statistics.js')
 	return render_template('home.html', title="Home")
 
 
@@ -128,17 +127,12 @@ def GenererateLogsOnUserRequest():
 
 	for i in range(200):
 		log_entry = GetDummydata()
-		print log_entry
 		
 		encrypted_log_entry = {}
 		encrypted_log_entry['encrypted_log'] = utils.EncryptData(log_entry, public_key, dict_keys=['from_ip', 'to_ip', 'port','time'])
 		encrypted_log_entry['from_ip'] = log_entry['from_ip']
 		encrypted_log_entry['time'] = log_entry['time']
 
-		print "Encrypted : ",encrypted_log_entry, "\n\n"
-	
-
-		#encrypted_log_entry is a dict
 		connection.SaveLogEntryInDatabase(encrypted_log_entry)
 
 		current = connection.get_current_accumulator(encrypted_log_entry['from_ip'])
@@ -158,7 +152,7 @@ def GenereratePPLsOnUserRequest():
 @socketio.on('channel_all_ppls_req')
 def channel_hosts_list(c_req):
 	global socketio
-	print "Client requested for logs"
+	print "Client requested for all PPLs"
 	cursor = connection.FetchAllPPl()
 	response = []
 	for i in range(cursor.count()):
@@ -167,10 +161,7 @@ def channel_hosts_list(c_req):
 		utc_time = iso_time.isoformat()
 		current['time_of_ppl_generation'] = utc_time
 		response.append(current)
-	#print "Response : ", response
-	print "Size of json_data : ", len(response)
 	js = json.dumps(response)
-	#print js
 	socketio.emit('channel_all_ppls_resp', js)
 
 @socketio.on('channel_keys_req')
@@ -186,7 +177,6 @@ def channel_keys(c_req):
 	res = {'AgencyName' : 'CSP', 'keyval' : public.exportKey()}
 	response.append(res)
 	js = json.dumps(response)
-	print js
 	socketio.emit('channel_keys_resp', js)
 
 @socketio.on('channel_ppl_req')
@@ -271,7 +261,6 @@ def channel_ppls_verify(data):
 	global socketio
 	index, data = data.split("****")
 	actual_data, sig = data.split("$####$")
-	print actual_data, "\n",sig
 	filepath = utils.get_key_path("CSP", "public")
 	key_content = ""
 	with open(filepath, 'r') as content_file:
@@ -286,7 +275,6 @@ def channel_log_verify(data):
 	global socketio
 	data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
 	data = data[:-3]
-	print data
 	logs_arr = data.split(",,,")
 	i = 0
 	flag = True
@@ -303,7 +291,6 @@ def channel_log_verify(data):
 		current_dble['encrypted_log'] = cur[0]
 		current_dble['hash'] = cur[1]
 
-		print '\n\n',prev_dble,'\n\n' ,current_dble, '\n\n'
 		flag = utils.SequenceVerification(prev_dble, current_dble)
 		if flag == False:
 			break
@@ -323,7 +310,7 @@ def DeleteAllCollection():
 @socketio.on('channel_function_request')
 def call_function(data):
 	global socketio
-	print "Got FUNCTION Req : ", data, type(data)
+	print "Got FUNCTION Call Request : ", data
 	if data == 1:
 		thread = Thread(target=GenereratePPLsOnUserRequest)
 	elif data == 2:
@@ -337,8 +324,5 @@ def call_function(data):
 	thread.start()
 
 if __name__ == "__main__":
-
-	#thread = Thread(target=main)
-	#thread.start()
 
 	socketio.run(app, '', port=4000, debug=True)

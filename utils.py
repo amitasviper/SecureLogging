@@ -52,8 +52,6 @@ class BloomFilter(object):
 
 		#If bitarray is created from existing bitarray from mongodb database
 		else:
-			print "Type is : ",type(bloom_dict)
-			print bloom_dict['accumulator']
 			self.ip = str(bloom_dict['ip'])
 			self.capacity = int(bloom_dict['capacity'])
 			self.error_rate = float(bloom_dict['error_rate'])
@@ -255,7 +253,6 @@ def GeneratePPL():
 		ppl_dict = generate_signature(private_key, data)
 		ppl_dict['time_of_ppl_generation'] = time_of_ppl_generation
 		ppl_dict['ip'] = accumulator['ip']
-		print "HHHHHHHHHHH--------------------------\n",ppl_dict
 		connection.SavePPL(ppl_dict)
 		print "Inseted PPL"
 
@@ -314,11 +311,8 @@ def get_rsa_key(agency_name, ktype=None):
 			return rsa_key
 
 def VerifySignature(public_key_str, actual_data, signature):
-	#public_key = RSA.importKey(public_key_str)
 	public_key= Get_RSA_key("CSP", "public")
-	print "SSSSSRRR"
 	#signature = unicodedata.normalize('NFKD', signature).encode('ascii','ignore')
-	print type(signature)
 	signature = signature.strip()
 	signature = base64.b64decode(signature)
 
@@ -356,7 +350,6 @@ def bloomNDatabaseConnection():
 		connection.update_accumulator(bloom_dict)
 
 	else:
-		print "Generating from database : ", current
 		BloomFilter(bloom_dict=current)
 
 
