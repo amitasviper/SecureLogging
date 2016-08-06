@@ -84,37 +84,37 @@ def get_ppl_details():
 
 @app.route('/getlogs', methods=['GET', 'POST'])
 def get_logs():
-	#try:
-	from_ip = request.args.get('from_ip')
-	start_date = request.args.get('start_date')
-	end_date = request.args.get('end_date')
-	print from_ip, start_date, end_date
-	if end_date == None:
-		start_date = utils.ConvertStringToISODate(start_date)
-		resp = connection.FetchPPL(from_ip, start_date)
-		iso_time = resp['time']
-		utc_time = iso_time.isoformat()
-		resp['time'] = utc_time
-		return render_template('logdetails.html')
-		#return render_template('ppldetails.html', ppl_info=json.dumps(resp))
-	else:
-		start_date = utils.ConvertStringToISODate(start_date)
-		end_date = utils.ConvertStringToISODate(end_date)
-		cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
-		response = []
-		for i in range(cursor.count()):
-			current = cursor[i]
-			iso_time = current['time']
+	try:
+		from_ip = request.args.get('from_ip')
+		start_date = request.args.get('start_date')
+		end_date = request.args.get('end_date')
+		print from_ip, start_date, end_date
+		if end_date == None:
+			start_date = utils.ConvertStringToISODate(start_date)
+			resp = connection.FetchPPL(from_ip, start_date)
+			iso_time = resp['time']
 			utc_time = iso_time.isoformat()
-			current['time'] = utc_time
-			response.append(current)
-		return render_template('logdetails.html')
-		#return render_template('ppldetails.html', ppl_info=json.dumps(response))
-	#except:
-	return """<center>
-		<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
-		</center>
-		"""
+			resp['time'] = utc_time
+			return render_template('logdetails.html')
+			#return render_template('ppldetails.html', ppl_info=json.dumps(resp))
+		else:
+			start_date = utils.ConvertStringToISODate(start_date)
+			end_date = utils.ConvertStringToISODate(end_date)
+			cursor = connection.FetchLogsRange(from_ip, start_date, end_date)
+			response = []
+			for i in range(cursor.count()):
+				current = cursor[i]
+				iso_time = current['time']
+				utc_time = iso_time.isoformat()
+				current['time'] = utc_time
+				response.append(current)
+			return render_template('logdetails.html')
+			#return render_template('ppldetails.html', ppl_info=json.dumps(response))
+	except:
+		return """<center>
+			<h1 style="margin-top:100px;">Landed on a WRONG page. You must have left some field empty or entered incorrect value.<br> <a href='/'>HOME</a></h1>
+			</center>
+			"""
 
 
 def GenererateLogsOnUserRequest():
@@ -310,14 +310,30 @@ def channel_log_verify(data):
 	
 	socketio.emit('channel_log_verify_resp', flag)
 
+def DeletePPLsCollection():
+	connection.DropPPLsCollection()
+
+def DeleteLogsCollection():
+	connection.DropLogsCollection()
+
+def DeleteAllCollection():
+	connection.DropAll()
+
+
 @socketio.on('channel_function_request')
 def call_function(data):
 	global socketio
 	print "Got FUNCTION Req : ", data, type(data)
 	if data == 1:
 		thread = Thread(target=GenereratePPLsOnUserRequest)
-	else:
+	elif data == 2:
 		thread = Thread(target=GenererateLogsOnUserRequest)
+	elif data == 3:
+		thread = Thread(target=DeletePPLsCollection)
+	elif data == 4:
+		thread = Thread(target=DeleteLogsCollection)
+	elif data == 5:
+		thread = Thread(target=DeleteAllCollection)
 	thread.start()
 
 if __name__ == "__main__":

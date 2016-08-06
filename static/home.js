@@ -59,6 +59,21 @@ function generateLogs()
     socket.emit('channel_function_request', 2);
 }
 
+function clearPPLs()
+{
+    socket.emit('channel_function_request', 3);
+}
+
+function clearLogs()
+{
+    socket.emit('channel_function_request', 4);
+}
+
+function clearAll()
+{
+    socket.emit('channel_function_request', 5);
+}
+
 function get_ppl_details(ppl_details) {
     window.location.href = '/getppldetails?' + ppl_details;
 }

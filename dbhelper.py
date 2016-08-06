@@ -21,6 +21,17 @@ class MConnection():
 		self.collection_accumulator = self.local_db[self.collection_name_accumulator]
 		self.collection_PPL = self.local_db[self.collection_name_PPL]
 
+	def DropLogsCollection(self):
+		self.collection.drop()
+		self.collection_accumulator.drop()
+
+	def DropPPLsCollection(self):
+		self.collection_PPL.drop()
+
+	def DropAll(self):
+		self.DropLogsCollection()
+		self.DropPPLsCollection()
+
 	def fetch_all(self, limit=20):
 
 		local_collection = self.collection
