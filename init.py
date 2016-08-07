@@ -26,7 +26,7 @@ elif async_mode == 'gevent':
 	from gevent import monkey
 	monkey.patch_all()
 
-import utils, dbhelper, os, unicodedata
+import utils, dbhelper, os, unicodedata, random
 from dummy_data import GetDummydata
 import time, random, json, urllib2, requests
 from flask import Flask, render_template, url_for, request, jsonify, Response, send_from_directory
@@ -35,6 +35,7 @@ from flask_socketio import SocketIO, send, emit
 from threading import Thread
 
 utils.DEBUG_LEVEL = 10
+ALPHABETS = "asdfghjklzxcvbnmqwertyuiopASDFGHJKLZXCVBNMQWERTYUIOP1234567890-=[];,./<>?: "
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode=async_mode)
@@ -316,6 +317,20 @@ def channel_log_verify(data):
 	print "Present in acc: ", flag
 	socketio.emit('channel_log_inacc_resp' + str(index), flag)
 
+
+@socketio.on('channel_log_dec_req')
+def channel_log_verify(data):
+	global socketio
+	data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
+	elog, index = data.split("***")
+
+	private_key = utils.Get_RSA_key("LEA", "private")
+	try:
+		data = utils.DecryptData(elog, private_key)
+	except:
+		data = ''.join(random.choice(ALPHABETS) for i in range(512))
+
+	socketio.emit('channel_log_dec_resp' + str(index), data)
 
 
 def DeletePPLsCollection():
