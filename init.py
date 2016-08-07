@@ -294,8 +294,29 @@ def channel_log_verify(data):
 		flag = utils.SequenceVerification(prev_dble, current_dble)
 		if flag == False:
 			break
-	
 	socketio.emit('channel_log_verify_resp', flag)
+
+@socketio.on('channel_log_inacc_req')
+def channel_log_verify(data):
+	global socketio
+	data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
+	ip, elog, time, index = data.split("***")
+	flag = False
+
+	time = str(utils.ConvertStringToISODate(time).date())
+	accumulator = connection.get_accumulator(ip, time)
+
+	if accumulator != None:
+		bloom_filter = utils.BloomFilter(bloom_dict=accumulator)
+		flag = bloom_filter.Lookup(elog)
+
+	else:
+		flag = False
+
+	print "Present in acc: ", flag
+	socketio.emit('channel_log_inacc_resp' + str(index), flag)
+
+
 
 def DeletePPLsCollection():
 	connection.DropPPLsCollection()

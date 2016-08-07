@@ -17,12 +17,47 @@ function get_logs(){
           //actual_data = actual_data.replace(/'/g, '"');
           //actual_data = JSON.parse(JSON.stringify(actual_data));
           //actual_data = JSON.parse(actual_data);
-          $('#table_log_details').append('<tr id="' + index + '"><td style="vertical-align:middle">' + index +'</td><td style="vertical-align:middle"><input type="text" class="form-control" value="' + value.from_ip + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" class="accumulator" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><p>Log Hash Chain:</p><textarea class="form-control" cols="130" rows="1" >' + value.hash +'</textarea></td><td><button class="' + index + 'btn btn btn-primary" onclick="rowFunction(' + index + ')">Add to Chain</button></td></tr>')
+          $('#table_log_details').append('<tr id="' + index + '"><td style="vertical-align:middle">' + index +'</td><td style="vertical-align:middle"><input type="text" id="ip' + index + '" class="form-control" value="' + value.from_ip + '"/><input type="text" class="form-control" id="time' + index+ '" value="' + value.time + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" id="elog' + index + '" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><p>Log Hash Chain:</p><textarea class="form-control" cols="130" rows="1" >' + value.hash +'</textarea></td><td><button class="' + index + 'btn btn btn-primary" onclick="addToChain(' + index + ')">Add to Chain</button><br><br><button class="' + index + 'abtn btn btn-info" onclick="isInAccumulator(' + index + ')">Test if in Acc</button></td></tr>')
         });
     });
 }
 
-function rowFunction(index)
+function isInAccumulator(index)
+{
+  var ip = document.getElementById('ip'+index).value;
+  var elog = document.getElementById('elog'+index).value;
+  var time = document.getElementById('time'+index).value;
+
+  data = ip + "***" + elog + "***" + time + "***" + index;
+
+  socket.emit('channel_log_inacc_req', data);
+
+  socket.on('channel_log_inacc_resp' + index, function (data) {
+
+    var row = $("#" + index);
+    var button = row.children()[3].childNodes.item(3);
+    console.log(button + typeof(button));
+  
+  if(data)
+  {
+    if(button.className.split(" ")[0] == index+"abtn"){
+        button.className = index + "abtn btn btn-success";
+        button.textContent = "Present";
+    }
+  }
+  else
+  {
+    if(button.className.split(" ")[0] == index+"abtn"){
+        button.className = index + "abtn btn btn-danger";
+        button.textContent = "Not Present";
+    }
+  }
+
+  });
+
+}
+
+function addToChain(index)
 {
   //var n = el.parentNode.parentNode.cells[2].getElementByClassName('accumulator');
   var row = $("#" + index);

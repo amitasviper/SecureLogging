@@ -84,10 +84,21 @@ class MConnection():
 		local_collection = self.collection_accumulator
 		current_date = str(datetime.now().date())
 		data = {}
-		updated_data = {}
 		data['time'] = current_date
 		data['ip'] = ip
 		cursor = local_collection.find(data,{'_id':0, 'time':0})
+		print "Cursor is ",cursor, " length : ",cursor.count()
+		if cursor.count() == 0:
+			return None
+		else:
+			return cursor[0]
+
+	def get_accumulator(self, ip, time):
+		local_collection = self.collection_accumulator
+		data = {}
+		data['time'] = time
+		data['ip'] = ip
+		cursor = local_collection.find(data,{'_id':0})
 		print "Cursor is ",cursor, " length : ",cursor.count()
 		if cursor.count() == 0:
 			return None
