@@ -236,7 +236,8 @@ def channel_logs(logs_query):
 			end_date = logs_query[2][len("end_date="):]
 		start_date = logs_query[1][len("start_date="):]
 		from_ip = logs_query[0][len("from_ip="):]
-		from_ip = None
+		if from_ip == "":
+			from_ip = None
 		print "*****", from_ip, start_date, end_date
 		if end_date == None:
 			start_date = utils.ConvertStringToISODate(start_date)

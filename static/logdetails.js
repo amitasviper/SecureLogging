@@ -17,7 +17,7 @@ function get_logs(){
           //actual_data = actual_data.replace(/'/g, '"');
           //actual_data = JSON.parse(JSON.stringify(actual_data));
           //actual_data = JSON.parse(actual_data);
-          $('#table_log_details').append('<tr id="' + index + '"><td style="vertical-align:middle">' + index +'</td><td style="vertical-align:middle"><input type="text" id="ip' + index + '" class="form-control" value="' + value.from_ip + '"/><input type="text" class="form-control" id="time' + index+ '" value="' + value.time + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" id="elog' + index + '" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><p>Log Hash Chain:</p><textarea class="form-control" cols="130" rows="1" >' + value.hash +'</textarea><div style="display:none;" id="raw_data_div' + index + '"><br>Decrypted Data :<textarea class="form-control" style="background-color:#D4EFDF;" id="raw_data' + index +'" cols="130" rows="4"></textarea></div></td><td><button class="' + index + 'btn btn btn-primary" onclick="addToChain(' + index + ')">Add to Chain</button><br><br><button class="' + index + 'abtn btn btn-info" onclick="isInAccumulator(' + index + ')">Test if in Acc</button><br><br><button class="' + index + 'dbtn btn btn-warning" onclick="decrypt(' + index + ')">Decrypt Data</button></td></tr>')
+          $('#table_log_details').append('<tr id="' + index + '"><td style="vertical-align:middle">' + index +'</td><td style="vertical-align:middle"><input type="text" id="ip' + index + '" class="form-control" value="' + value.from_ip + '"/><br><input type="text" class="form-control" id="time' + index+ '" value="' + value.time + '"/></td><td><p>Encrypted Log:</p><textarea class="form-control" id="elog' + index + '" cols="130" rows="4" >' + value.encrypted_log +'</textarea><br><p>Log Hash Chain:</p><textarea id="hash' + index + '" class="form-control" cols="130" rows="1" >' + value.hash +'</textarea><div style="display:none;" id="raw_data_div' + index + '"><br>Decrypted Data :<textarea class="form-control" style="background-color:#D4EFDF;" id="raw_data' + index +'" cols="130" rows="4"></textarea></div></td><td><button class="' + index + 'btn btn btn-primary" onclick="addToChain(' + index + ')">Add to Chain</button><br><br><button id="inaccumulator' + index +'" class="' + index + 'abtn btn btn-info" onclick="isInAccumulator(' + index + ')">Test if in Acc</button><br><br><button class="' + index + 'dbtn btn btn-warning" onclick="decrypt(' + index + ')">Decrypt Data</button></td></tr>')
         });
     });
 }
@@ -34,9 +34,7 @@ function isInAccumulator(index)
 
   socket.on('channel_log_inacc_resp' + index, function (data) {
 
-    var row = $("#" + index);
-    var button = row.children()[3].childNodes.item(3);
-    console.log(button + typeof(button));
+  var button = document.getElementById('inaccumulator'+index);
   
   if(data)
   {
@@ -83,8 +81,8 @@ function addToChain(index)
 {
   //var n = el.parentNode.parentNode.cells[2].getElementByClassName('accumulator');
   var row = $("#" + index);
-  var elog = row.children()[2].childNodes.item(1).value;
-  var hash_chain = row.children()[2].childNodes.item(4).value;
+  var elog  = document.getElementById('elog'+index).value;
+  var hash_chain = document.getElementById('hash'+index).value;
   //Combine(actual_data, signature, index);
 
   var x = document.getElementById("query");
@@ -144,49 +142,5 @@ function checkOrder()
 
   });
 }
-
-/*
-function verify_signature(){
-  $.ajax({
-      type: 'GET',
-      //async: false,
-      url: var_url,
-      dataType: 'json',
-    success: function(data){
-            show('page', true);
-            show('loading', false);
-
-      x = (new Date()).getTime(); // current time
-      if(json_key == 'cpu_usage'){
-                console.log("The cpu_usage array is : " + JSON.stringify(data));
-                var flag = false;
-                for(i = 0; i < var_series.length; i++){
-                    if(i == var_series.length - 1){
-                        flag = true;
-                    }
-                    z = data.cpu_usage[i];
-                    var_series[i].addPoint([x, z], flag);
-                }
-      }
-            else{
-                y = data.json_key;
-                var_series[0].addPoint([x, y], true);
-            }
-      console.log("Series : "+var_series[0])
-      get_data(var_series, var_url, json_key);
-    },
-    error: function(status, error){
-      x = (new Date()).getTime(); // current time
-      y = 0;
-      if(json_key == 'cpu_usage'){
-        var_series[1].addPoint([x, Math.random()], true, true);
-
-      }
-      var_series[0].addPoint([x, y], true, true);
-      console.log("Into error");
-      setTimeout(function(){get_data(var_series, var_url, json_key)}, 2000);
-    }
-  });
-} */
 
 $(document).ready(initialise);
