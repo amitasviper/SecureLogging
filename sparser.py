@@ -2,6 +2,22 @@ import pyparsing as pyp
 import itertools
 import pyshark
 
+from Queue import Queue
+from threading import Thread
+
+num_fetch_threads = 2
+enclosure_queue = Queue()
+
+def downloadEnclosures(q):
+    while True:
+        print '%s: Looking for the next enclosure' % i
+        url = q.get()
+        print '%s: Downloading:' % i, url
+        # instead of really downloading the URL,
+        # we just pretend and sleep
+        time.sleep(i + 2)
+        q.task_done()
+
 integer = pyp.Word(pyp.nums)
 ip_addr = pyp.Combine(integer+'.'+integer+'.'+integer+'.'+integer)
 
@@ -29,7 +45,8 @@ def snort_parse(logfile):
                 fields = bnf.searchString(tmpStr)
                 print(fields)
 
-def print_conversation_header(pkt):
+def add_log_to_queue(pkt):
+    global enclosure_queue
     try:
         protocol =  pkt.transport_layer
         src_addr = pkt.ip.src
@@ -41,9 +58,18 @@ def print_conversation_header(pkt):
         #ignore packets that aren't TCP/UDP or IPv4
         pass
 
-def Initialise():
+def FetchLogs():
     cap = pyshark.LiveCapture(interface='wlan0')
-    cap.apply_on_packets(print_conversation_header, timeout=100)
+    cap.apply_on_packets(add_log_to_queue, timeout=100)
+
+def Initialise():
+    worker1 = Thread(target=downloadEnclosures, args=(enclosure_queue,))
+    worker1.setDaemon(True)
+    worker1.start()
+
+    worker2 = Thread(target=FetchLogs, args=())
+    worker2.setDaemon(True)
+    worker2.start()
 
 if __name__ == '__main__':
     #snort_parse('snort_file')
