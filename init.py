@@ -123,7 +123,7 @@ def get_logs():
 def GenererateLogsOnUserRequest():
     global connection
     public_key = utils.GetRSAKey("LEA", "public")
-    for i in range(200):
+    for i in range(6):
         log_entry = GetDummydata()
 
         encrypted_log_entry = {}
@@ -297,7 +297,8 @@ def channel_log_verify(data):
         current_dble['hash'] = cur[1]
 
         flag = utils.SequenceVerification(prev_dble, current_dble)
-        if flag == False:
+        if not flag:
+            print 'VERIFICATION FAILED'
             break
     socketio.emit('channel_log_verify_resp', flag)
 
@@ -310,12 +311,11 @@ def channel_log_verify(data):
     flag = False
 
     time = str(utils.ConvertStringToISODate(time).date())
-    accumulator = connection.getAccumulator(ip, time)
+    accumulator = connection.GetAccumulator(ip, time)
 
-    if accumulator != None:
+    if accumulator is not None:
         bloom_filter = utils.BloomFilter(bloom_dict=accumulator)
         flag = bloom_filter.Lookup(elog)
-
     else:
         flag = False
 

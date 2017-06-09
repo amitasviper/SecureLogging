@@ -81,7 +81,7 @@ class MConnection():
         else:
             return cursor[0]
 
-    def getAccumulator(self, ip, time):
+    def GetAccumulator(self, ip, time):
         local_collection = self.collection_accumulator
         data = {}
         data['time'] = time

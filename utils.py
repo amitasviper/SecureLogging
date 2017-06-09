@@ -159,7 +159,7 @@ def generate_RSA_keys(bits=2048):
     return private_key
 
 
-def save_key(key, name):
+def saveKey(key, name):
     pwd = os.getcwd()
     dir_key = os.path.join(pwd, 'keys')
 
@@ -173,13 +173,13 @@ def save_key(key, name):
         f.write(public)
 
 
-def get_hash(data):
+def getHash(data):
     hashed = str(hashlib.sha1(data).hexdigest())
     return hashed
 
 
 def GetRSAKey(agency_name, ktype):
-    key = getRsaKey(agency_name, ktype=ktype)
+    key = getRSAKey(agency_name, ktype=ktype)
     return key
 
 
@@ -220,14 +220,15 @@ def decryptData(str_data, decrypting_key):
 
 def CreateLogChain(encrypted_log_entry, prev_log_chain):
     data_to_hash = str(encrypted_log_entry) + str(prev_log_chain)
-    current_log_chain = get_hash(data_to_hash)
+    current_log_chain = getHash(data_to_hash)
     return current_log_chain
 
 
 def SequenceVerification(prev_dble, current_dble):
     data_to_hash = str(current_dble['encrypted_log']) + str(prev_dble['hash'])
-    current_log_chain = get_hash(data_to_hash)
-    return (current_log_chain == current_dble['hash'])
+    current_log_chain = getHash(data_to_hash)
+    print current_log_chain, current_dble['hash']
+    return current_log_chain == current_dble['hash']
 
 
 def generateSignature(private_key, data):
@@ -284,7 +285,7 @@ def getKeyPath(agency_name, ktype):
     return apath
 
 
-def getRsaKey(agency_name, ktype=None):
+def getRSAKey(agency_name, ktype=None):
     lea_public_key = getKeyPath("LEA", "public")
     lea_private_key = getKeyPath("LEA", "private")
     csp_public_key = getKeyPath("CSP", "public")
@@ -301,7 +302,7 @@ def getRsaKey(agency_name, ktype=None):
         else:
             printMessage(3, "Generating new RSA key")
             rsa_key = generate_RSA_keys()
-            save_key(rsa_key, "LawEnforcementAgency")
+            saveKey(rsa_key, "LawEnforcementAgency")
             return rsa_key
     else:
         if os.path.isfile(csp_private_key) and os.path.isfile(csp_public_key):
@@ -314,7 +315,7 @@ def getRsaKey(agency_name, ktype=None):
         else:
             printMessage(3, "Generating new RSA key")
             rsa_key = generate_RSA_keys()
-            save_key(rsa_key, "CloudServiceProvider")
+            saveKey(rsa_key, "CloudServiceProvider")
             return rsa_key
 
 def VerifySignature(public_key_str, actual_data, signature):
@@ -328,9 +329,7 @@ def VerifySignature(public_key_str, actual_data, signature):
 
     verifier = PKCS1_PSS.new(public_key)
     res = verifier.verify(h, signature)
-
     # res = public_key.verify(actual_data, signature)
-
     if res:
         print "Authenticity Verification PASSED"
         return True
