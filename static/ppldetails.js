@@ -1,36 +1,21 @@
 var socket = io.connect('http://' + document.domain + ':' + location.port);
 function get_ppls(){
-    
     var base_uri = document.baseURI;
     base_uri = base_uri.split("?")[1]
 
     socket.emit('channel_ppl_req', base_uri);
-
     socket.on('channel_ppl_resp', function (data) {
-        //console.log(data);
-        //var json = JSON.parse($.trim(data));
-        //console.log('Got data : ' + data);
-
         data = JSON.parse(data);
-
-        console.log('Got data rrwr: ' +  data);
-
         $.each(data, function (index, value) {
-          //actual_data = actual_data.replace(/'/g, '"');
-          //actual_data = JSON.parse(JSON.stringify(actual_data));
-          //actual_data = JSON.parse(actual_data);
           $('#table_ppl_details').append('<tr id="' + index + '"><td>' + index +'</td><td><input type="text" class="form-control" value="' + value.ip + '"/></td><td><p>Accumulator Data:</p><textarea class="form-control" class="accumulator" cols="130" rows="2" >' + value.actual_data +'</textarea><br><br><p>Signature Value:</p><textarea class="form-control" cols="130" rows="4" >' + value.signature +'</textarea></td><td><button class="' + index + 'btn btn btn-primary" onclick="rowFunction(' + index + ')">Verify Signature</button></td></tr>')
         });
     });
 }
 
-function rowFunction(index)
-{
-  //var n = el.parentNode.parentNode.cells[2].getElementByClassName('accumulator');
+function rowFunction(index) {
   var row = $("#" + index);
   var actual_data = row.children()[2].childNodes.item(1).value;
   var signature = row.children()[2].childNodes.item(5).value;
-  console.log("Index is " + index + " Accumulator : " + actual_data + " Signature : " + signature);
   Verify_PPL(actual_data, signature, index);
 }
 
@@ -41,14 +26,12 @@ function initialise(){
 function Verify_PPL(actual_data, signature, index)
 {
   var data = actual_data + "$####$" + signature;
-  socket.emit('channel_ppl_verify_req', index + "****" +data);
 
+  socket.emit('channel_ppl_verify_req', index + "****" +data);
   socket.on('channel_ppl_verify_resp' + index, function (data) {
-  console.log(data);
-  
+
   var row = $("#" + index);
   var button = row.children()[3].childNodes.item(0);
-  console.log(button + typeof(button));
 
   if(button.className.split(" ")[0] == index+"btn"){
     if (data){
@@ -60,7 +43,6 @@ function Verify_PPL(actual_data, signature, index)
       button.textContent = "Failed";
     }
   }
-
   });
 }
 /*
